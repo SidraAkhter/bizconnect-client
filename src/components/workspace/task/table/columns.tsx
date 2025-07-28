@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { DataTableColumnHeader } from "./table-column-header";
 import { DataTableRowActions } from "./table-row-actions";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
+import  Badge  from "@/components/ui/badge";
 import {
   TaskPriorityEnum,
   TaskPriorityEnumType,
