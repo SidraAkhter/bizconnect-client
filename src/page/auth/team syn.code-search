@@ -1,0 +1,19 @@
+# Query: team syn
+# ContextLines: 1
+
+3 results - 3 files
+
+client\src\page\auth\Sign-in.tsx:
+  211            <Logo linkWrapper={false} />
+  212:           ConnectCircle.
+  213          </Link>
+
+client\src\page\auth\Sign-up.tsx:
+  80            <Logo linkWrapper={false} />
+  81:           ConnectCircle.
+  82          </Link>
+
+client\src\page\invite\InviteUser.tsx:
+  122            <Logo />
+  123:           ConnectCircle.
+  124          </Link>
