@@ -37,6 +37,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteProjectMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
+// ✅ Define type for project items (you can replace with actual Project type if available)
+interface ProjectItem {
+  _id: string;
+  name: string;
+  emoji?: string;
+}
+
 export function NavProjects() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,6 +110,7 @@ export function NavProjects() {
       }
     );
   };
+
   return (
     <>
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -119,20 +127,17 @@ export function NavProjects() {
             </button>
           </PermissionsGuard>
         </SidebarGroupLabel>
+
         <SidebarMenu className="h-[320px] scrollbar overflow-y-auto pb-2">
-          {isError ? <div>Error occured</div> : null}
+          {isError ? <div>Error occurred</div> : null}
           {isPending ? (
-            <Loader
-              className=" w-5 h-5
-             animate-spin
-              place-self-center"
-            />
+            <Loader className="w-5 h-5 animate-spin place-self-center" />
           ) : null}
 
           {!isPending && projects?.length === 0 ? (
             <div className="pl-3">
               <p className="text-xs text-muted-foreground">
-                There is no projects in this Workspace yet. Projects you create
+                There is no project in this Workspace yet. Projects you create
                 will show up here.
               </p>
               <PermissionsGuard requiredPermission={Permissions.CREATE_PROJECT}>
@@ -148,7 +153,7 @@ export function NavProjects() {
               </PermissionsGuard>
             </div>
           ) : (
-            projects.map((item) => {
+            projects.map((item: ProjectItem) => {
               const projectUrl = `/workspace/${workspaceId}/project/${item._id}`;
 
               return (
@@ -159,6 +164,7 @@ export function NavProjects() {
                       <span>{item.name}</span>
                     </Link>
                   </SidebarMenuButton>
+
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <SidebarMenuAction showOnHover>

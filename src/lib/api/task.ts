@@ -1,6 +1,5 @@
 import API from "./api";
 
-// Create Task
 export const createTaskMutationFn = async ({
   workspaceId,
   projectId,
@@ -16,14 +15,11 @@ export const createTaskMutationFn = async ({
     assigneeId?: string;
   };
 }) => {
-  const response = await API.post(
-    `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-    data
-  );
+  const response = await API.post(`/workspaces/${workspaceId}/projects/${projectId}/tasks`, data);
   return response.data;
 };
 
-// Edit Task
+// You can add more if needed:
 export const editTaskMutationFn = async ({
   workspaceId,
   projectId,
@@ -33,13 +29,13 @@ export const editTaskMutationFn = async ({
   workspaceId: string;
   projectId: string;
   taskId: string;
-  data: {
-    name?: string;
-    description?: string;
-    status?: string;
-    priority?: string;
-    assigneeId?: string;
-  };
+  data: Partial<{
+    name: string;
+    description: string;
+    status: string;
+    priority: string;
+    assigneeId: string;
+  }>;
 }) => {
   const response = await API.put(
     `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`,
@@ -48,7 +44,6 @@ export const editTaskMutationFn = async ({
   return response.data;
 };
 
-// Delete Task
 export const deleteTaskMutationFn = async ({
   workspaceId,
   projectId,
@@ -64,7 +59,6 @@ export const deleteTaskMutationFn = async ({
   return response.data;
 };
 
-// Get All Tasks
 export const getTasksQueryFn = async ({
   workspaceId,
   projectId,
@@ -72,13 +66,10 @@ export const getTasksQueryFn = async ({
   workspaceId: string;
   projectId: string;
 }) => {
-  const response = await API.get(
-    `/workspaces/${workspaceId}/projects/${projectId}/tasks`
-  );
+  const response = await API.get(`/workspaces/${workspaceId}/projects/${projectId}/tasks`);
   return response.data;
 };
 
-// Get Task by ID
 export const getTaskByIdQueryFn = async ({
   workspaceId,
   projectId,
