@@ -1,8 +1,36 @@
-import API from "@/lib/api";
+import API from "./api";
 
-const getAllWorkspacesUserIsMemberQueryFn = async () => {
+export const getAllWorkspacesUserIsMemberQueryFn = async () => {
   const response = await API.get("/workspaces/user");
   return response.data;
 };
 
-export default getAllWorkspacesUserIsMemberQueryFn;
+export const createWorkspaceMutationFn = async (data: {
+  name: string;
+  description: string;
+}) => {
+  const response = await API.post("/workspaces", data);
+  return response.data;
+};
+
+export const editWorkspaceMutationFn = async ({
+  workspaceId,
+  data,
+}: {
+  workspaceId: string;
+  data: { name: string; description: string };
+}) => {
+  const response = await API.put(`/workspaces/${workspaceId}`, data);
+  return response.data;
+};
+
+export const changeWorkspaceMemberRoleMutationFn = async ({
+  workspaceId,
+  data,
+}: {
+  workspaceId: string;
+  data: { roleId: string; memberId: string };
+}) => {
+  const response = await API.put(`/workspaces/${workspaceId}/members/role`, data);
+  return response.data;
+};

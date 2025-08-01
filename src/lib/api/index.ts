@@ -1,3 +1,11 @@
 export { default as logoutMutationFn } from "./logout";
-export { default as deleteProjectMutationFn } from "./project";
-export { default as getAllWorkspacesUserIsMemberQueryFn } from "./workspace";
+export {
+  createProjectMutationFn,
+  deleteProjectMutationFn,
+} from "./project";
+export {
+  getAllWorkspacesUserIsMemberQueryFn,
+  createWorkspaceMutationFn,
+  editWorkspaceMutationFn,
+  changeWorkspaceMemberRoleMutationFn,
+} from "./workspace";
