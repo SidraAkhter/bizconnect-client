@@ -1,8 +1,9 @@
 // src/lib/api/index.ts
 
-export { default } from "./api";
+export { default } from "./api"; // default API instance
 export { default as logoutMutationFn } from "./logout";
 
+// Project APIs
 export {
   createProjectMutationFn,
   deleteProjectMutationFn,
@@ -11,6 +12,7 @@ export {
   getProjectByIdQueryFn,
 } from "./project";
 
+// Workspace APIs
 export {
   getAllWorkspacesUserIsMemberQueryFn,
   createWorkspaceMutationFn,
@@ -19,6 +21,7 @@ export {
   changeWorkspaceMemberRoleMutationFn,
 } from "./workspace";
 
+// Task APIs
 export {
   createTaskMutationFn,
   editTaskMutationFn,
@@ -26,3 +29,7 @@ export {
   getTasksQueryFn,
   getTaskByIdQueryFn,
 } from "./task";
+
+// ✅ If you have this in a separate file later
+// export { getWorkspaceAnalyticsQueryFn } from "./analytics";
+// export { getCurrentUserQueryFn } from "./user";
