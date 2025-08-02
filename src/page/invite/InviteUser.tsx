@@ -39,7 +39,7 @@ const InviteUser = () => {
   // Display the error message from the mutation
   useEffect(() => {
     if (mutationError) {
-      // @ts-ignore - error has message property
+      
       const errorMsg = mutationError.message || "Failed to join workspace";
       setErrorMessage(errorMsg);
       console.error("Workspace join error:", mutationError);
@@ -100,7 +100,7 @@ const InviteUser = () => {
       },
       onError: (error) => {
         console.error("Error joining workspace:", error);
-        // @ts-ignore - error has message property
+        
         const msg = error.message || "Failed to join workspace. Please try again.";
         setErrorMessage(msg);
         toast({

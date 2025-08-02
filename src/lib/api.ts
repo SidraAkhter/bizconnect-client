@@ -15,7 +15,6 @@ import {
   ProjectByIdPayloadType,
   ProjectResponseType,
 } from "../types/api.type";
-
 import {
   AllWorkspaceResponseType,
   CreateWorkspaceType,
@@ -27,7 +26,21 @@ import {
   EditWorkspaceType,
 } from "@/types/api.type";
 
-// ---------------------- AUTH ----------------------
+interface ErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+// ✅ Helper to extract error messages
+function getErrorMessage(error: unknown): string {
+  const err = error as ErrorResponse;
+  return err?.response?.data?.message ?? "An unknown error occurred";
+}
+
+// ************ AUTH ****************
 
 export const loginMutationFn = async (
   data: loginType
@@ -36,28 +49,31 @@ export const loginMutationFn = async (
   return response.data;
 };
 
-export const registerMutationFn = async (data: registerType) => {
-  const response = await API.post("/auth/register", data);
-  return response.data;
-};
+export const registerMutationFn = async (data: registerType) =>
+  await API.post("/auth/register", data);
 
 export const logoutMutationFn = async () => {
   try {
     const response = await API.post("/auth/logout", {}, { timeout: 5000 });
     return response.data;
-  } catch (error) {
-  console.error("Logout error:", error);
-  document.cookie = "auth_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-  return { message: "Logged out on client side (server unreachable)" };
-}
+  } catch (error: unknown) {
+    console.warn("Error during logout API call:", error);
+    document.cookie = "auth_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    return { message: "Logged out on client side (server unreachable)" };
+  }
 };
 
 export const getCurrentUserQueryFn = async (): Promise<CurrentUserResponseType> => {
-  const response = await API.get(`/user/current`);
-  return response.data;
+  try {
+    const response = await API.get(`/user/current`);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Current user API error:", error);
+    throw new Error(getErrorMessage(error));
+  }
 };
 
-// ---------------------- WORKSPACE ----------------------
+// ********* WORKSPACE ****************
 
 export const createWorkspaceMutationFn = async (
   data: CreateWorkspaceType
@@ -74,32 +90,44 @@ export const editWorkspaceMutationFn = async ({
   return response.data;
 };
 
-export const getAllWorkspacesUserIsMemberQueryFn =
-  async (): Promise<AllWorkspaceResponseType> => {
-    const response = await API.get(`/workspace/all`);
-    return response.data;
-  };
+export const getAllWorkspacesUserIsMemberQueryFn = async (): Promise<AllWorkspaceResponseType> => {
+  const response = await API.get(`/workspace/all`);
+  return response.data;
+};
 
 export const getWorkspaceByIdQueryFn = async (
   workspaceId: string
 ): Promise<WorkspaceByIdResponseType> => {
-  if (!workspaceId || workspaceId === 'undefined') {
-    throw new Error("Invalid workspace ID");
+  if (!workspaceId || workspaceId === "undefined") {
+    throw new Error("Invalid workspace ID: Cannot fetch workspace with undefined ID");
   }
-  const response = await API.get(`/workspace/${workspaceId}`);
-  return response.data;
+  try {
+    const response = await API.get(`/workspace/${workspaceId}`);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Error fetching workspace details:", error);
+    throw new Error(getErrorMessage(error));
+  }
 };
 
 export const getMembersInWorkspaceQueryFn = async (
   workspaceId: string
 ): Promise<AllMembersInWorkspaceResponseType> => {
-  const response = await API.get(`/workspace/members/${workspaceId}`);
-  return response.data;
+  try {
+    const response = await API.get(`/workspace/members/${workspaceId}`);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Error fetching workspace members:", error);
+    throw new Error(getErrorMessage(error));
+  }
 };
 
 export const getWorkspaceAnalyticsQueryFn = async (
   workspaceId: string
 ): Promise<AnalyticsResponseType> => {
+  if (!workspaceId || workspaceId === "undefined") {
+    throw new Error("Invalid workspace ID: Cannot fetch analytics with undefined ID");
+  }
   const response = await API.get(`/workspace/analytics/${workspaceId}`);
   return response.data;
 };
@@ -117,21 +145,41 @@ export const changeWorkspaceMemberRoleMutationFn = async ({
 
 export const deleteWorkspaceMutationFn = async (
   workspaceId: string
-): Promise<{ message: string; currentWorkspace: string }> => {
+): Promise<{
+  message: string;
+  currentWorkspace: string;
+}> => {
   const response = await API.delete(`/workspace/delete/${workspaceId}`);
   return response.data;
 };
 
-// ---------------------- MEMBER ----------------------
+// ************ MEMBERS ****************
 
 export const invitedUserJoinWorkspaceMutationFn = async (
   inviteCode: string
-): Promise<{ message: string; workspaceId: string }> => {
-  const response = await API.post(`/member/workspace/${inviteCode}/join`);
-  return response.data;
+): Promise<{
+  message: string;
+  workspaceId: string;
+}> => {
+  try {
+    if (!inviteCode) throw new Error("Invite code is required");
+
+    const response = await API.post(`/member/workspace/${inviteCode}/join`);
+    if (response.data?.workspaceId) {
+      try {
+        await API.get(`/workspace/members/${response.data.workspaceId}`);
+      } catch (err: unknown) {
+        console.error("Error fetching updated members list:", err);
+      }
+    }
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Error joining workspace:", error);
+    throw new Error(getErrorMessage(error));
+  }
 };
 
-// ---------------------- PROJECT ----------------------
+// ************ PROJECTS ****************
 
 export const createProjectMutationFn = async ({
   workspaceId,
@@ -161,6 +209,9 @@ export const getProjectsInWorkspaceQueryFn = async ({
   pageSize = 10,
   pageNumber = 1,
 }: AllProjectPayloadType): Promise<AllProjectResponseType> => {
+  if (!workspaceId || workspaceId === "undefined") {
+    throw new Error("Invalid workspace ID");
+  }
   const response = await API.get(
     `/project/workspace/${workspaceId}/all?pageSize=${pageSize}&pageNumber=${pageNumber}`
   );
@@ -190,14 +241,16 @@ export const getProjectAnalyticsQueryFn = async ({
 export const deleteProjectMutationFn = async ({
   workspaceId,
   projectId,
-}: ProjectByIdPayloadType): Promise<{ message: string }> => {
+}: ProjectByIdPayloadType): Promise<{
+  message: string;
+}> => {
   const response = await API.delete(
     `/project/${projectId}/workspace/${workspaceId}/delete`
   );
   return response.data;
 };
 
-// ---------------------- TASK ----------------------
+// ************ TASKS ****************
 
 export const createTaskMutationFn = async ({
   workspaceId,
@@ -236,16 +289,16 @@ export const getAllTasksQueryFn = async ({
   pageSize,
 }: AllTaskPayloadType): Promise<AllTaskResponseType> => {
   const baseUrl = `/task/workspace/${workspaceId}/all`;
-
   const queryParams = new URLSearchParams();
+
   if (keyword) queryParams.append("keyword", keyword);
   if (projectId) queryParams.append("projectId", projectId);
   if (assignedTo) queryParams.append("assignedTo", assignedTo);
   if (priority) queryParams.append("priority", priority);
   if (status) queryParams.append("status", status);
   if (dueDate) queryParams.append("dueDate", dueDate);
-  if (pageNumber) queryParams.append("pageNumber", pageNumber?.toString());
-  if (pageSize) queryParams.append("pageSize", pageSize?.toString());
+  if (pageNumber) queryParams.append("pageNumber", pageNumber.toString());
+  if (pageSize) queryParams.append("pageSize", pageSize.toString());
 
   const url = queryParams.toString() ? `${baseUrl}?${queryParams}` : baseUrl;
   const response = await API.get(url);
