@@ -19,6 +19,7 @@ export {
   editWorkspaceMutationFn,
   deleteWorkspaceMutationFn,
   changeWorkspaceMemberRoleMutationFn,
+  getWorkspaceByIdQueryFn, // ✅ add this if not already
 } from "./workspace";
 
 // Task APIs

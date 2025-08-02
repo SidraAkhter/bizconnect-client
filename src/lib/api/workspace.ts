@@ -1,3 +1,5 @@
+// src/lib/api/workspace.ts
+
 import API from "./api";
 
 export const getAllWorkspacesUserIsMemberQueryFn = async () => {
@@ -37,5 +39,11 @@ export const changeWorkspaceMemberRoleMutationFn = async ({
 
 export const deleteWorkspaceMutationFn = async (workspaceId: string) => {
   const response = await API.delete(`/workspaces/${workspaceId}`);
+  return response.data;
+};
+
+// ✅ This was missing — now added
+export const getWorkspaceByIdQueryFn = async (workspaceId: string) => {
+  const response = await API.get(`/workspaces/${workspaceId}`);
   return response.data;
 };
