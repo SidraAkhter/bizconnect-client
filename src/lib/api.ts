@@ -1,319 +1,123 @@
-import API from "./axios-client";
-import {
-  AllMembersInWorkspaceResponseType,
-  AllProjectPayloadType,
-  AllProjectResponseType,
-  AllTaskPayloadType,
-  AllTaskResponseType,
-  AnalyticsResponseType,
-  ChangeWorkspaceMemberRoleType,
-  CreateProjectPayloadType,
-  CreateTaskPayloadType,
-  EditTaskPayloadType,
-  CreateWorkspaceResponseType,
-  EditProjectPayloadType,
-  ProjectByIdPayloadType,
-  ProjectResponseType,
-} from "../types/api.type";
-import {
-  AllWorkspaceResponseType,
-  CreateWorkspaceType,
-  CurrentUserResponseType,
-  LoginResponseType,
-  loginType,
-  registerType,
-  WorkspaceByIdResponseType,
-  EditWorkspaceType,
-} from "@/types/api.type";
+import axios from "axios";
 
-interface ErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
+// Axios instance
+export const API = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+  withCredentials: true,
+});
 
-// ✅ Helper to extract error messages
-function getErrorMessage(error: unknown): string {
-  const err = error as ErrorResponse;
-  return err?.response?.data?.message ?? "An unknown error occurred";
-}
-
-// ************ AUTH ****************
-
-export const loginMutationFn = async (
-  data: loginType
-): Promise<LoginResponseType> => {
-  const response = await API.post("/auth/login", data);
+// ========= Authentication =========
+export const getCurrentUserQueryFn = async () => {
+  const response = await API.get("/auth/me");
   return response.data;
 };
 
-export const registerMutationFn = async (data: registerType) =>
-  await API.post("/auth/register", data);
-
-export const logoutMutationFn = async () => {
-  try {
-    const response = await API.post("/auth/logout", {}, { timeout: 5000 });
-    return response.data;
-  } catch (error: unknown) {
-    console.warn("Error during logout API call:", error);
-    document.cookie = "auth_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    return { message: "Logged out on client side (server unreachable)" };
-  }
-};
-
-export const getCurrentUserQueryFn = async (): Promise<CurrentUserResponseType> => {
-  try {
-    const response = await API.get(`/user/current`);
-    return response.data;
-  } catch (error: unknown) {
-    console.error("Current user API error:", error);
-    throw new Error(getErrorMessage(error));
-  }
-};
-
-// ********* WORKSPACE ****************
-
-export const createWorkspaceMutationFn = async (
-  data: CreateWorkspaceType
-): Promise<CreateWorkspaceResponseType> => {
-  const response = await API.post(`/workspace/create/new`, data);
+// ========= Workspace =========
+export const getWorkspaceByIdQueryFn = async (workspaceId: string) => {
+  const response = await API.get(`/workspaces/${workspaceId}`);
   return response.data;
 };
 
-export const editWorkspaceMutationFn = async ({
+export const getWorkspaceAnalyticsQueryFn = async (workspaceId: string) => {
+  const response = await API.get(`/workspaces/${workspaceId}/analytics`);
+  return response.data;
+};
+
+export const getMembersInWorkspaceQueryFn = async (workspaceId: string) => {
+  const response = await API.get(`/workspaces/${workspaceId}/members`);
+  return response.data;
+};
+
+// ========= Projects =========
+export const getProjectsInWorkspaceQueryFn = async (workspaceId: string) => {
+  const response = await API.get(`/workspaces/${workspaceId}/projects`);
+  return response.data;
+};
+
+// ========= Tasks =========
+export const getTasksQueryFn = async ({
   workspaceId,
-  data,
-}: EditWorkspaceType) => {
-  const response = await API.put(`/workspace/update/${workspaceId}`, data);
-  return response.data;
-};
-
-export const getAllWorkspacesUserIsMemberQueryFn = async (): Promise<AllWorkspaceResponseType> => {
-  const response = await API.get(`/workspace/all`);
-  return response.data;
-};
-
-export const getWorkspaceByIdQueryFn = async (
-  workspaceId: string
-): Promise<WorkspaceByIdResponseType> => {
-  if (!workspaceId || workspaceId === "undefined") {
-    throw new Error("Invalid workspace ID: Cannot fetch workspace with undefined ID");
-  }
-  try {
-    const response = await API.get(`/workspace/${workspaceId}`);
-    return response.data;
-  } catch (error: unknown) {
-    console.error("Error fetching workspace details:", error);
-    throw new Error(getErrorMessage(error));
-  }
-};
-
-export const getMembersInWorkspaceQueryFn = async (
-  workspaceId: string
-): Promise<AllMembersInWorkspaceResponseType> => {
-  try {
-    const response = await API.get(`/workspace/members/${workspaceId}`);
-    return response.data;
-  } catch (error: unknown) {
-    console.error("Error fetching workspace members:", error);
-    throw new Error(getErrorMessage(error));
-  }
-};
-
-export const getWorkspaceAnalyticsQueryFn = async (
-  workspaceId: string
-): Promise<AnalyticsResponseType> => {
-  if (!workspaceId || workspaceId === "undefined") {
-    throw new Error("Invalid workspace ID: Cannot fetch analytics with undefined ID");
-  }
-  const response = await API.get(`/workspace/analytics/${workspaceId}`);
-  return response.data;
-};
-
-export const changeWorkspaceMemberRoleMutationFn = async ({
-  workspaceId,
-  data,
-}: ChangeWorkspaceMemberRoleType) => {
-  const response = await API.put(
-    `/workspace/change/member/role/${workspaceId}`,
-    data
-  );
-  return response.data;
-};
-
-export const deleteWorkspaceMutationFn = async (
-  workspaceId: string
-): Promise<{
-  message: string;
-  currentWorkspace: string;
-}> => {
-  const response = await API.delete(`/workspace/delete/${workspaceId}`);
-  return response.data;
-};
-
-// ************ MEMBERS ****************
-
-export const invitedUserJoinWorkspaceMutationFn = async (
-  inviteCode: string
-): Promise<{
-  message: string;
+  projectId,
+}: {
   workspaceId: string;
-}> => {
-  try {
-    if (!inviteCode) throw new Error("Invite code is required");
-
-    const response = await API.post(`/member/workspace/${inviteCode}/join`);
-    if (response.data?.workspaceId) {
-      try {
-        await API.get(`/workspace/members/${response.data.workspaceId}`);
-      } catch (err: unknown) {
-        console.error("Error fetching updated members list:", err);
-      }
-    }
-    return response.data;
-  } catch (error: unknown) {
-    console.error("Error joining workspace:", error);
-    throw new Error(getErrorMessage(error));
-  }
-};
-
-// ************ PROJECTS ****************
-
-export const createProjectMutationFn = async ({
-  workspaceId,
-  data,
-}: CreateProjectPayloadType): Promise<ProjectResponseType> => {
-  const response = await API.post(
-    `/project/workspace/${workspaceId}/create`,
-    data
-  );
+  projectId: string;
+}) => {
+  const response = await API.get(`/workspaces/${workspaceId}/projects/${projectId}/tasks`);
   return response.data;
 };
 
-export const editProjectMutationFn = async ({
-  projectId,
-  workspaceId,
-  data,
-}: EditProjectPayloadType): Promise<ProjectResponseType> => {
-  const response = await API.put(
-    `/project/${projectId}/workspace/${workspaceId}/update`,
-    data
-  );
+export const getAllTasksQueryFn = async () => {
+  const response = await API.get("/tasks");
   return response.data;
 };
 
-export const getProjectsInWorkspaceQueryFn = async ({
-  workspaceId,
-  pageSize = 10,
-  pageNumber = 1,
-}: AllProjectPayloadType): Promise<AllProjectResponseType> => {
-  if (!workspaceId || workspaceId === "undefined") {
-    throw new Error("Invalid workspace ID");
-  }
-  const response = await API.get(
-    `/project/workspace/${workspaceId}/all?pageSize=${pageSize}&pageNumber=${pageNumber}`
-  );
-  return response.data;
+// ✅ Define a shared type for task data
+type TaskData = {
+  title: string;
+  description: string;
+  status: "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDate: string;
+  assignedTo: string;
 };
-
-export const getProjectByIdQueryFn = async ({
-  workspaceId,
-  projectId,
-}: ProjectByIdPayloadType): Promise<ProjectResponseType> => {
-  const response = await API.get(
-    `/project/${projectId}/workspace/${workspaceId}`
-  );
-  return response.data;
-};
-
-export const getProjectAnalyticsQueryFn = async ({
-  workspaceId,
-  projectId,
-}: ProjectByIdPayloadType): Promise<AnalyticsResponseType> => {
-  const response = await API.get(
-    `/project/${projectId}/workspace/${workspaceId}/analytics`
-  );
-  return response.data;
-};
-
-export const deleteProjectMutationFn = async ({
-  workspaceId,
-  projectId,
-}: ProjectByIdPayloadType): Promise<{
-  message: string;
-}> => {
-  const response = await API.delete(
-    `/project/${projectId}/workspace/${workspaceId}/delete`
-  );
-  return response.data;
-};
-
-// ************ TASKS ****************
 
 export const createTaskMutationFn = async ({
   workspaceId,
   projectId,
   data,
-}: CreateTaskPayloadType) => {
+}: {
+  workspaceId: string;
+  projectId: string;
+  data: TaskData;
+}) => {
   const response = await API.post(
-    `/task/project/${projectId}/workspace/${workspaceId}/create`,
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
     data
   );
   return response.data;
 };
 
-export const editTaskMutationFn = async ({
+export const updateTaskMutationFn = async ({
+  workspaceId,
+  projectId,
   taskId,
-  projectId,
-  workspaceId,
   data,
-}: EditTaskPayloadType): Promise<{ message: string }> => {
-  const response = await API.put(
-    `/task/${taskId}/project/${projectId}/workspace/${workspaceId}/update/`,
+}: {
+  workspaceId: string;
+  projectId: string;
+  taskId: string;
+  data: TaskData;
+}) => {
+  const response = await API.patch(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`,
     data
   );
-  return response.data;
-};
-
-export const getAllTasksQueryFn = async ({
-  workspaceId,
-  keyword,
-  projectId,
-  assignedTo,
-  priority,
-  status,
-  dueDate,
-  pageNumber,
-  pageSize,
-}: AllTaskPayloadType): Promise<AllTaskResponseType> => {
-  const baseUrl = `/task/workspace/${workspaceId}/all`;
-  const queryParams = new URLSearchParams();
-
-  if (keyword) queryParams.append("keyword", keyword);
-  if (projectId) queryParams.append("projectId", projectId);
-  if (assignedTo) queryParams.append("assignedTo", assignedTo);
-  if (priority) queryParams.append("priority", priority);
-  if (status) queryParams.append("status", status);
-  if (dueDate) queryParams.append("dueDate", dueDate);
-  if (pageNumber) queryParams.append("pageNumber", pageNumber.toString());
-  if (pageSize) queryParams.append("pageSize", pageSize.toString());
-
-  const url = queryParams.toString() ? `${baseUrl}?${queryParams}` : baseUrl;
-  const response = await API.get(url);
   return response.data;
 };
 
 export const deleteTaskMutationFn = async ({
   workspaceId,
+  projectId,
   taskId,
 }: {
   workspaceId: string;
+  projectId: string;
   taskId: string;
-}): Promise<{ message: string }> => {
+}) => {
   const response = await API.delete(
-    `task/${taskId}/workspace/${workspaceId}/delete`
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`
   );
+  return response.data;
+};
+
+// ========= Invite User =========
+export const inviteUserMutationFn = async ({
+  workspaceId,
+  email,
+}: {
+  workspaceId: string;
+  email: string;
+}) => {
+  const response = await API.post(`/workspaces/${workspaceId}/invite`, { email });
   return response.data;
 };
