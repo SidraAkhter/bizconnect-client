@@ -6,6 +6,18 @@ import { Loader } from "lucide-react";
 import { getAvatarColor, getAvatarFallbackText } from "@/lib/helper";
 import { format } from "date-fns";
 
+interface Project {
+  _id: string;
+  name: string;
+  emoji: string;
+  createdAt: string;
+  createdBy: {
+    name: string;
+    profilePicture?: string;
+  };
+}
+
+
 const RecentProjects = () => {
   const workspaceId = useWorkspaceId();
 
@@ -38,7 +50,7 @@ const RecentProjects = () => {
       )}
 
       <ul role="list" className="space-y-2">
-        {projects.map((project) => {
+        {projects.map((project: Project) => {
           const name = project.createdBy.name;
           const initials = getAvatarFallbackText(name);
           const avatarColor = getAvatarColor(name);

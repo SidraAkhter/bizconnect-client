@@ -10,7 +10,7 @@ import { priorities, statuses } from "./table/data";
 import useTaskTableFilter from "@/hooks/use-task-table-filter";
 import { useQuery } from "@tanstack/react-query";
 import useWorkspaceId from "@/hooks/use-workspace-id";
-import { getAllTasksQueryFn } from "@/lib/api";
+import { getTasksQueryFn } from "@/lib/api"; // ✅ correct
 import { TaskType } from "@/types/api.type";
 import useGetProjectsInWorkspaceQuery from "@/hooks/api/use-get-projects";
 import useGetWorkspaceMembers from "@/hooks/api/use-get-workspace-members";
@@ -27,6 +27,15 @@ interface DataTableFilterToolbarProps {
   setFilters: SetFilters;
 }
 
+// src/types/index.ts ya types.ts me
+export type ProjectType = {
+  _id: string;
+  name: string;
+  description: string;
+  emoji: string;
+};
+
+
 const TaskTable = () => {
   const param = useParams();
   const projectId = param.projectId as string;
@@ -39,34 +48,35 @@ const TaskTable = () => {
   const columns = getColumns(projectId);
 
   const { data, isLoading } = useQuery({
-    queryKey: [
-      "all-tasks",
+  queryKey: [
+    "all-tasks",
+    workspaceId,
+    pageSize,
+    pageNumber,
+    filters,
+    projectId,
+  ],
+  queryFn: () =>
+    getTasksQueryFn({
       workspaceId,
-      pageSize,
+      keyword: filters.keyword,
+      priority: filters.priority,
+      status: filters.status,
+      projectId: projectId || filters.projectId,
+      assignedTo: filters.assigneeId,
       pageNumber,
-      filters,
-      projectId,
-    ],
-    queryFn: () =>
-      getAllTasksQueryFn({
-        workspaceId,
-        keyword: filters.keyword,
-        priority: filters.priority,
-        status: filters.status,
-        projectId: projectId || filters.projectId,
-        assignedTo: filters.assigneeId,
-        pageNumber,
-        pageSize,
-      }),
-    staleTime: 0,
-  });
+      pageSize,
+    }),
+  staleTime: 0,
+});
 
-  const tasks: TaskType[] = data?.tasks || [];
-  const totalCount = data?.pagination.totalCount || 0;
+const tasks: TaskType[] = data?.tasks || [];
+const totalCount = data?.pagination.totalCount || 0;
 
-  const handlePageChange = (page: number) => {
-    setPageNumber(page);
-  };
+const handlePageChange = (page: number) => {
+  setPageNumber(page);
+};
+
 
   // Handle page size changes
   const handlePageSizeChange = (size: number) => {
@@ -117,7 +127,7 @@ const DataTableFilterToolbar: FC<DataTableFilterToolbarProps> = ({
   const members = memberData?.members || [];
 
   //Workspace Projects
-  const projectOptions = projects?.map((project) => {
+  const projectOptions = projects?.map((project: ProjectType) => {
     return {
       label: (
         <div className="flex items-center gap-1">

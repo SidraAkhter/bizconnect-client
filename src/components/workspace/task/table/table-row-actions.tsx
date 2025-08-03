@@ -37,10 +37,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const task = row.original;
   const taskId = task._id as string;
   const taskCode = task.taskCode;
+  const projectId = task.project?._id as string;
 
   const handleConfirm = () => {
     mutate(
-      { workspaceId, taskId },
+      // ✅ Correct
+      { workspaceId, projectId, taskId },
       {
         onSuccess: (data) => {
           queryClient.invalidateQueries({ queryKey: ["all-tasks", workspaceId] });
