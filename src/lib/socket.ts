@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-// Replace with your actual backend base URL if needed
-export const socket = io("http://localhost:8080", {
+// Use environment variable instead of hardcoding localhost
+export const socket = io(import.meta.env.VITE_API_URL as string, {
   withCredentials: true,
 });
