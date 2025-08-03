@@ -1,7 +1,11 @@
 import { io } from "socket.io-client";
 
-console.log("API URL is:", import.meta.env.VITE_API_URL);
+// Remove trailing "/api" from the URL for socket connection
+const baseSocketURL = (import.meta.env.VITE_API_URL as string).replace("/api", "");
 
-export const socket = io(import.meta.env.VITE_API_URL as string, {
+console.log("Socket connecting to:", baseSocketURL);
+
+export const socket = io(baseSocketURL, {
   withCredentials: true,
+  transports: ["websocket"], // Force WebSocket (optional but recommended)
 });
