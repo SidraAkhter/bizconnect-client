@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Axios instance
 export const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+ baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 });
 
@@ -292,3 +292,4 @@ export const invitedUserJoinWorkspaceMutationFn = async (inviteCode: string) => 
   const response = await API.post(`/workspaces/join/${inviteCode}`);
   return response.data;
 };
+console.log("Base URL:", import.meta.env.VITE_API_URL);

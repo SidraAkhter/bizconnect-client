@@ -47,7 +47,7 @@ const SignIn = () => {
   useEffect(() => {
     const checkApiStatus = async () => {
       try {
-        console.log("Checking API at:", import.meta.env.VITE_API_BASE_URL);
+        console.log("Checking API at:", import.meta.env.VITE_API_URL);
         
         // Try different ways to connect to the API
         let response = null;
@@ -55,7 +55,7 @@ const SignIn = () => {
         
         // First try: the /auth/login endpoint
         try {
-          response = await fetch(import.meta.env.VITE_API_BASE_URL + '/auth/login', {
+          response = await fetch(import.meta.env.VITE_API_URL + '/auth/login', {
             method: 'OPTIONS', // OPTIONS is often allowed for CORS preflight
             headers: {
               'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ const SignIn = () => {
         // Second try: without the /api prefix (if it's included in the base URL)
         if (!connected) {
           try {
-            const baseWithoutApiPrefix = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '');
+            const baseWithoutApiPrefix = import.meta.env.VITE_API_URL.replace(/\/api$/, '');
             response = await fetch(baseWithoutApiPrefix + '/auth/login', {
               method: 'OPTIONS',
               headers: {
@@ -93,7 +93,7 @@ const SignIn = () => {
         // Third try: just ping the base URL
         if (!connected) {
           try {
-            response = await fetch(import.meta.env.VITE_API_BASE_URL, {
+            response = await fetch(import.meta.env.VITE_API_URL, {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
